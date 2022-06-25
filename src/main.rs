@@ -15,14 +15,15 @@ fn render_articles(articles: &Vec<Article>) {
 }
 
 
-fn main() -> Result<(), Box<dyn Error>> {
-    dotenv()?;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    dotenv();
     let api_key = std::env::var("API_KEY")?;
 
     let mut newsapi = NewsAPI::new(&api_key);
     newsapi.endpoint(Endpoint::TopHeadlines);
 
-    let newsapi_response = newsapi.fetch()?;
+    let newsapi_response = newsapi.fetch_async().await?;
 
     render_articles(&newsapi_response.articles());
 
