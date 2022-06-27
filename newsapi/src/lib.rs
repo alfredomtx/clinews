@@ -116,6 +116,8 @@ impl NewsAPI {
         let country = format!("country={}", self.country.to_string());
         url.set_query(Some(&country));
 
+        println!("{}", url.to_string());
+
         Ok(url.to_string())
     }
 
@@ -132,15 +134,22 @@ impl NewsAPI {
 
     #[cfg(feature = "async")]
     pub async fn fetch_async(&self) -> Result<NewsAPIResponse, NewsApiError> {
+        use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
+
         let url = self.prepare_url()?;
         let client = reqwest::Client::new();
+        println!("{}", url);
         let request = client.request(Method::GET, url)
-            .header("Authorization", &self.api_key)
+            .header(AUTHORIZATION, &self.api_key)
+            .header(CONTENT_TYPE, "application/json")
             .build()
             .map_err(|e| NewsApiError::AsyncRequestFailed(e))?;
 
-            let response: NewsAPIResponse = client.execute(request).await?
-            .json().await.map_err(|e| NewsApiError::AsyncRequestFailed(e))?;
+            let response: NewsAPIResponse = client
+            .execute(request).await?
+            .json().await
+            .map_err(|e| NewsApiError::AsyncRequestFailed(e))?;
+
         match response.status.as_str() {
             "ok" => return Ok(response),
             _ => return Err(map_response_err(response.code))
